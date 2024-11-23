@@ -1,45 +1,42 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-
 const cors = require('cors');
+const mongoose = require('mongoose');
+require('dotenv').config(); // to load environment variables from .env file
 
 const app = express();
 
+// CORS configuration
 app.use(cors());
-app.use(express.json({limit: '50mb'}));
-app.use(express.urlencoded({limit: '50mb'}));
 
-// parse requests of content-type - application/json
-app.use(bodyParser.json());
+// Body parsing middleware
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb' }));
 
-// parse requests of content-type - application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }));
-
-// simple route
-
+// Simple routes
 app.get('/', (req, res) => {
-  res.json({ message: ' Ahmad Fuck you 00100' });
+  res.json({ message: 'Ahmad, you are awesome!' });
 });
-app.get('/omar', (req, res) => {
-  res.json({ message: 'wolocom to omar ' });
-});
-const db = require('./app/models');
 
-db.mongoose
-  .connect(db.url, {
+app.get('/omar', (req, res) => {
+  res.json({ message: "Welcome to Omar's route!" });
+});
+
+// Connect to the database
+mongoose
+  .connect(process.env.DB_URL, {
+    // using env variable for DB connection string
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    // tls: true,
-    // tlsCAFile: './ca-certificate.crt',
   })
   .then(() => {
     console.log('Connected to the database!');
   })
   .catch((err) => {
-    console.log(err);
-    process.exit();
+    console.error('Database connection error:', err);
+    process.exit(1);
   });
 
+// Import routes
 require('./app/routes/turorial.routes')(app);
 require('./app/routes/locations.routes')(app);
 require('./app/routes/myQuizes.routes')(app);
@@ -48,26 +45,18 @@ require('./app/routes/user.routes')(app);
 require('./app/routes/discraption.routes')(app);
 require('./app/routes/question.routes')(app);
 require('./app/routes/courses.routes')(app);
-require('./app/routes/authorization.routes')(app);
-require('./app/routes/authorization.routes')(app);
+require('./app/routes/authorization.routes')(app); // Only once
 require('./app/routes/orderList.routes')(app);
-app.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Origin, X-Requested-With, Content-Type, Accept'
-  );
-  next();
-});
 
-app.all('*', (req, res, next) => {
+// 404 error handler
+app.all('*', (req, res) => {
   res.status(404).json({
     status: 'false',
-    message: 'Page is Not FOUND',
+    message: 'Page Not Found',
   });
 });
 
-// set port, listen for request
+// Start server
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}.`);
